@@ -626,12 +626,14 @@ def generate(pset, min_, max_, condition, type_=None):
     """
     if type_ is None:
         type_ = pset.ret
+    terminal_types = [k for k, v in pset.terminals.items() if len(v) != 0]
+    non_primitive_types = [k for k, v in pset.primitives.items() if len(v) == 0]
     expr = []
     height = random.randint(min_, max_)
     stack = [(0, type_)]
     while len(stack) != 0:
         depth, type_ = stack.pop()
-        if condition(height, depth):
+        if (condition(height, depth) and type_ in terminal_types) or type_ in non_primitive_types:
             try:
                 term = random.choice(pset.terminals[type_])
             except IndexError:
@@ -644,7 +646,17 @@ def generate(pset, min_, max_, condition, type_=None):
             expr.append(term)
         else:
             try:
-                prim = random.choice(pset.primitives[type_])
+                # Might not be respected if there is a type without terminal args
+                if condition:
+                    primitives_with_only_terminal_args = [p for p in pset.primitives[type_] if
+                                                          all([arg in terminal_types for arg in p.args])]
+
+                    if len(primitives_with_only_terminal_args) == 0:
+                        prim = random.choice(pset.primitives[type_])
+                    else:
+                        prim = random.choice(primitives_with_only_terminal_args)
+                else:
+                    prim = random.choice(pset.primitives[type_])
             except IndexError:
                 _, _, traceback = sys.exc_info()
                 raise IndexError("The gp.generate function tried to add "
