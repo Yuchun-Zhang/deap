@@ -633,7 +633,10 @@ def generate(pset, min_, max_, condition, type_=None):
     stack = [(0, type_)]
     while len(stack) != 0:
         depth, type_ = stack.pop()
-        if (condition(height, depth) and type_ in terminal_types) or type_ in non_primitive_types:
+        # print(height, depth, condition(height, depth), type_)
+        if (condition(height, depth) and type_ in terminal_types) \
+                or type_ in non_primitive_types \
+                or (depth >= height and type_ in terminal_types):
             try:
                 term = random.choice(pset.terminals[type_])
             except IndexError:
